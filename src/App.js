@@ -1,23 +1,67 @@
-import logo from './logo.svg';
-import './App.css';
+import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { checkAuth } from './store/authSlice';
+import Login from './components/Login';
+import Register from './components/Register';
+import PostList from './components/PostList';
+import PostDetail from './components/PostDetail';
+import CreatePost from './components/CreatePost';
+import AdminDashboard from './components/AdminDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
+  const dispatch = useDispatch();
+  const { initialized } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    // Check authentication status on app mount
+    dispatch(checkAuth());
+  }, [dispatch]);
+
+  // Show loading while checking authentication
+  if (!initialized) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <PostList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/posts/:id" 
+          element={
+            <ProtectedRoute>
+              <PostDetail />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/create-post" 
+          element={
+            <ProtectedRoute>
+              <CreatePost />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
     </div>
   );
 }

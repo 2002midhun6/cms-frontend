@@ -1,0 +1,148 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .login-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    width: 50vw;
+    max-width: 400px;
+    backdrop-filter: blur(10px);
+  }
+  
+  h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .input-field {
+    padding: 0.8rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+  }
+  
+  .input-field:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
+    background: #fff;
+  }
+  
+  .input-field.error {
+    border-color: #ff4d4f;
+    background: #fff5f5;
+  }
+  
+  .error {
+    color: #ff4d4f;
+    font-size: 0.85rem;
+    margin: 0.3rem 0 0 0.5rem;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .error-message {
+    color: #ff4d4f;
+    text-align: center;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    background: #fff5f5;
+    padding: 0.5rem;
+    border-radius: 5px;
+  }
+  
+  .submit-button {
+    background: #667eea;
+    color: white;
+    padding: 0.8rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .submit-button:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  .submit-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+  }
+  
+  .link:hover {
+    color: #5a67d8;
+    text-decoration: underline;
+  }
+  
+  p {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #555;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .login-container {
+      margin: 1rem;
+      padding: 1.5rem;
+    }
+  
+    h2 {
+      font-size: 1.5rem;
+    }
+  
+    .input-field {
+      font-size: 0.9rem;
+    }
+  
+    .submit-button {
+      font-size: 0.9rem;
+    }
+  }

@@ -1,0 +1,354 @@
+/* CreatePost.css - Modern, attractive styling */
+
+.container {
+    width: 50vw;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+  
+  .container h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .container form {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .container form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .form-group {
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  
+  .form-group input[type="text"],
+  .form-group textarea {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: 2px solid #e0e6ed;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+  
+  .form-group input[type="text"]:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .form-group textarea {
+    min-height: 200px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+  
+  .form-group input[type="text"]::placeholder,
+  .form-group textarea::placeholder {
+    color: #bdc3c7;
+    font-style: italic;
+  }
+  
+  /* Custom File Upload Styling */
+  .form-group input[type="file"] {
+    width: 100%;
+    padding: 1rem;
+    border: 2px dashed #e0e6ed;
+    border-radius: 12px;
+    background: #f8f9fa;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .form-group input[type="file"]:hover {
+    border-color: #667eea;
+    background: #e9ecef;
+  }
+  
+  .form-group input[type="file"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  .form-group input[type="file"]::file-selector-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .form-group input[type="file"]::file-selector-button:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-1px);
+  }
+  
+  /* Error states */
+  .form-group input.error,
+  .form-group textarea.error {
+    border-color: #e74c3c;
+    background: #fdf2f2;
+    animation: shake 0.5s ease-in-out;
+  }
+  
+  .form-group input.error:focus,
+  .form-group textarea.error:focus {
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+  }
+  
+  .error {
+    color: #e74c3c;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #fdf2f2;
+    border-radius: 6px;
+    border-left: 3px solid #e74c3c;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .error-message {
+    color: #e74c3c;
+    background: #fdf2f2;
+    padding: 1rem;
+    border-radius: 10px;
+    border-left: 4px solid #e74c3c;
+    margin-bottom: 2rem;
+    font-weight: 500;
+    text-align: center;
+  }
+  
+  /* Submit Button */
+  .container form button[type="submit"] {
+    width: 100%;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .container form button[type="submit"]:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  }
+  
+  .container form button[type="submit"]:active {
+    transform: translateY(0);
+  }
+  
+  .container form button[type="submit"]:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Loading state */
+  .container form button[type="submit"]:disabled::after {
+    content: '';
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Animations */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes spin {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    100% { transform: translateY(-50%) rotate(360deg); }
+  }
+  
+  /* Form entrance animation */
+  .container form {
+    animation: slideInUp 0.6s ease forwards;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  
+  .container h2 {
+    animation: fadeInDown 0.6s ease forwards;
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  
+  @keyframes slideInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fadeInDown {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Character count styling (you can add this to your component) */
+  .character-count {
+    font-size: 0.875rem;
+    color: #7f8c8d;
+    text-align: right;
+    margin-top: 0.5rem;
+  }
+  
+  .character-count.warning {
+    color: #f39c12;
+  }
+  
+  .character-count.error {
+    color: #e74c3c;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .container {
+      padding: 1rem;
+    }
+    
+    .container h2 {
+      font-size: 2rem;
+    }
+    
+    .container form {
+      padding: 1.5rem;
+    }
+    
+    .form-group input[type="text"],
+    .form-group textarea {
+      padding: 0.875rem 1rem;
+      font-size: 1rem;
+    }
+    
+    .form-group textarea {
+      min-height: 150px;
+    }
+    
+    .container form button[type="submit"] {
+      padding: 0.875rem 1.5rem;
+      font-size: 1rem;
+    }
+  }
+  
+  /* Focus indicators for accessibility */
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .container form button[type="submit"]:focus {
+    outline: none;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Enhanced file upload visual feedback */
+  .form-group input[type="file"]:valid {
+    border-color: #00b894;
+    background: #f0fff4;
+  }
+  
+  /* Form validation success states */
+  .form-group input.success,
+  .form-group textarea.success {
+    border-color: #00b894;
+    background: #f0fff4;
+  }
+  
+  .form-group input.success:focus,
+  .form-group textarea.success:focus {
+    border-color: #00b894;
+    box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.1);
+  }
+  
+  /* Subtle gradient background for better visual hierarchy */
+  .form-group {
+    position: relative;
+  }
+  
+  .form-group::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%);
+    border-radius: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .form-group:hover::before {
+    opacity: 1;
+  }
