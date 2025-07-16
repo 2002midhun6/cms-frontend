@@ -1,45 +1,84 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPost, createComment, toggleLike } from '../store/postSlice';
-import { useParams } from 'react-router-dom';
+import { fetchPost, createComment, updateComment, toggleLike, deletePost, deleteComment } from '../store/postSlice';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import './PostDetails.css';
 
 const PostDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { post, loading, error } = useSelector((state) => state.posts);
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { post, loading, error, deleteLoading, deleteCommentLoading, updateCommentLoading } = useSelector((state) => state.posts);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCommentDeleteConfirm, setShowCommentDeleteConfirm] = useState(null);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentContent, setEditingCommentContent] = useState('');
+  const [editCommentError, setEditCommentError] = useState('');
 
   useEffect(() => {
     dispatch(fetchPost(id));
   }, [dispatch, id]);
 
-  const validateComment = () => {
-    if (!comment.trim()) {
-      setCommentError('Comment cannot be empty');
-      return false;
+  const validateComment = (content) => {
+    if (!content.trim()) {
+      return 'Comment cannot be empty';
     }
-    if (comment.length > 500) {
-      setCommentError('Comment must be 500 characters or less');
-      return false;
+    if (content.length > 500) {
+      return 'Comment must be 500 characters or less';
     }
-    setCommentError('');
-    return true;
+    return '';
   };
 
   const handleCommentSubmit = (e) => {
     e.preventDefault();
-    if (!validateComment()) {
+    const error = validateComment(comment);
+    if (error) {
+      setCommentError(error);
       return;
     }
+    setCommentError('');
     dispatch(createComment({ postId: id, content: comment })).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setComment('');
         dispatch(fetchPost(id)); // Refresh post to update comments_count
       }
     });
+  };
+
+  const handleEditComment = (commentId, currentContent) => {
+    setEditingCommentId(commentId);
+    setEditingCommentContent(currentContent);
+    setEditCommentError('');
+  };
+
+  const handleUpdateComment = (e) => {
+    e.preventDefault();
+    const error = validateComment(editingCommentContent);
+    if (error) {
+      setEditCommentError(error);
+      return;
+    }
+    setEditCommentError('');
+    
+    dispatch(updateComment({ 
+      commentId: editingCommentId, 
+      content: editingCommentContent, 
+      postId: parseInt(id) 
+    })).then((result) => {
+      if (result.meta.requestStatus === 'fulfilled') {
+        setEditingCommentId(null);
+        setEditingCommentContent('');
+      }
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentContent('');
+    setEditCommentError('');
   };
 
   const handleLike = () => {
@@ -50,23 +89,103 @@ const PostDetail = () => {
     dispatch(toggleLike({ postId: id, isLike: false }));
   };
 
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const result = await dispatch(deletePost(id));
+      if (result.meta.requestStatus === 'fulfilled') {
+        navigate('/posts');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    }
+    setShowDeleteConfirm(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+
+  const handleCommentDeleteClick = (commentId) => {
+    setShowCommentDeleteConfirm(commentId);
+  };
+
+  const handleCommentDeleteConfirm = async () => {
+    try {
+      const result = await dispatch(deleteComment({ 
+        commentId: showCommentDeleteConfirm, 
+        postId: parseInt(id) 
+      }));
+      if (result.meta.requestStatus === 'fulfilled') {
+        dispatch(fetchPost(id));
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+    }
+    setShowCommentDeleteConfirm(null);
+  };
+
+  const handleCommentDeleteCancel = () => {
+    setShowCommentDeleteConfirm(null);
+  };
+
+  // Check if current user can edit/delete this post
+  const canEditPost = isAuthenticated && post && (post.author === user?.username || user?.is_staff);
+
+  // Check if current user can delete a specific comment
+  const canDeleteComment = (commentAuthor) => {
+    return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
+  };
+
+  // Check if current user can edit a specific comment
+  const canEditComment = (commentAuthor) => {
+    return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
+  };
+
   if (loading) return <p className="loading">Loading...</p>;
   if (error) return <p className="error-message">Error: {JSON.stringify(error)}</p>;
   if (!post) return <p className="no-post">No post found</p>;
 
   return (
     <div className="post-detail-container">
-      <h2>{post.title}</h2>
+      <div className="post-header">
+        <h2>{post.title}</h2>
+        {canEditPost && (
+          <div className="post-actions">
+            <Link to={`/posts/${id}/edit`} className="edit-button">
+              Edit
+            </Link>
+            <button 
+              onClick={handleDeleteClick}
+              className="delete-button"
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        )}
+      </div>
+
       <p className="post-meta">
         By {post.author} | {post.read_count} reads | {post.likes_count} likes
       </p>
+      
       {post.image && <img src={post.image} alt={post.title} className="post-image" />}
       {post.file && (
         <a href={post.file} className="post-file-link">
           Download File
         </a>
       )}
-      <p className="post-content">{post.content}</p>
+      
+      <div className="post-content">
+        {post.content.split('\n').map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
+      </div>
+
       {isAuthenticated && (
         <div>
           <div className="action-buttons">
@@ -91,6 +210,7 @@ const PostDetail = () => {
           </form>
         </div>
       )}
+      
       <div className="comments-section">
         <h3>Comments</h3>
         <ul className="comments-list">
@@ -99,8 +219,66 @@ const PostDetail = () => {
               .filter((c) => c.is_approved)
               .map((comment) => (
                 <li key={comment.id} className="comment-item">
-                  {comment.content} by {comment.author} (
-                  {new Date(comment.created_at).toLocaleString()})
+                  <div className="comment-content">
+                    {editingCommentId === comment.id ? (
+                      <form onSubmit={handleUpdateComment} className="edit-comment-form">
+                        <textarea
+                          value={editingCommentContent}
+                          onChange={(e) => setEditingCommentContent(e.target.value)}
+                          className={`edit-comment-textarea ${editCommentError ? 'error' : ''}`}
+                        />
+                        {editCommentError && <p className="error">{editCommentError}</p>}
+                        <div className="edit-comment-actions">
+                          <button 
+                            type="submit" 
+                            className="save-comment-button"
+                            disabled={updateCommentLoading}
+                          >
+                            {updateCommentLoading ? 'Saving...' : 'Save'}
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={handleCancelEdit}
+                            className="cancel-edit-button"
+                            disabled={updateCommentLoading}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <>
+                        <div className="comment-text">
+                          {comment.content}
+                        </div>
+                        <div className="comment-meta">
+                          by {comment.author} ({new Date(comment.created_at).toLocaleString()})
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {editingCommentId !== comment.id && (
+                    <div className="comment-actions">
+                      {canEditComment(comment.author) && (
+                        <button 
+                          onClick={() => handleEditComment(comment.id, comment.content)}
+                          className="edit-comment-button"
+                          disabled={updateCommentLoading}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {canDeleteComment(comment.author) && (
+                        <button 
+                          onClick={() => handleCommentDeleteClick(comment.id)}
+                          className="delete-comment-button"
+                          disabled={deleteCommentLoading}
+                        >
+                          {deleteCommentLoading && showCommentDeleteConfirm === comment.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </li>
               ))
           ) : (
@@ -108,6 +286,56 @@ const PostDetail = () => {
           )}
         </ul>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete this post? This action cannot be undone.</p>
+            <div className="modal-actions">
+              <button 
+                onClick={handleDeleteConfirm}
+                className="confirm-delete-button"
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+              <button 
+                onClick={handleDeleteCancel}
+                className="cancel-button"
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCommentDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirm Delete Comment</h3>
+            <p>Are you sure you want to delete this comment? This action cannot be undone.</p>
+            <div className="modal-actions">
+              <button 
+                onClick={handleCommentDeleteConfirm}
+                className="confirm-delete-button"
+                disabled={deleteCommentLoading}
+              >
+                {deleteCommentLoading ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+              <button 
+                onClick={handleCommentDeleteCancel}
+                className="cancel-button"
+                disabled={deleteCommentLoading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

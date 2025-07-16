@@ -9,6 +9,7 @@ import PostDetail from './components/PostDetail';
 import CreatePost from './components/CreatePost';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import EditPost from './components/EditPost';
 
 function App() {
   const dispatch = useDispatch();
@@ -45,6 +46,8 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/posts/:id/edit" element={
+          <ProtectedRoute><EditPost /></ProtectedRoute>} />
         <Route 
           path="/create-post" 
           element={
