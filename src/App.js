@@ -8,6 +8,8 @@ import PostList from './components/PostList';
 import PostDetail from './components/PostDetail';
 import CreatePost from './components/CreatePost';
 import AdminDashboard from './components/AdminDashboard';
+import UserManagement from './components/UserManagement';
+import CommentManagement from './components/CommentManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import EditPost from './components/EditPost';
 
@@ -16,11 +18,11 @@ function App() {
   const { initialized } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    // Check authentication status on app mount
+   
     dispatch(checkAuth());
   }, [dispatch]);
 
-  // Show loading while checking authentication
+  
   if (!initialized) {
     return <div>Loading...</div>;
   }
@@ -46,8 +48,14 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route path="/posts/:id/edit" element={
-          <ProtectedRoute><EditPost /></ProtectedRoute>} />
+        <Route 
+          path="/posts/:id/edit" 
+          element={
+            <ProtectedRoute>
+              <EditPost />
+            </ProtectedRoute>
+          } 
+        />
         <Route 
           path="/create-post" 
           element={
@@ -61,6 +69,22 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/users" 
+          element={
+            <ProtectedRoute>
+              <UserManagement />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/comments" 
+          element={
+            <ProtectedRoute>
+              <CommentManagement />
             </ProtectedRoute>
           } 
         />

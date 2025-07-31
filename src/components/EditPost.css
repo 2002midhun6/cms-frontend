@@ -1,6 +1,6 @@
 /* EditPost.css */
 .edit-post-container {
-  max-width: 800px;
+  width:85vw;
   margin: 0 auto;
   padding: 20px;
 }

@@ -9,8 +9,9 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading } = useSelector((state) => state.auth); // Removed error from selector
   const navigate = useNavigate();
+  const { error } = useSelector((state) => state.auth);
 
   const validateForm = () => {
     const newErrors = {};
@@ -46,19 +47,38 @@ const Login = () => {
       return;
     }
 
+    // Clear previous login errors
+    setErrors((prev) => ({ ...prev, login: null }));
+
     console.log('Login submitting:', { username, password });
     dispatch(login({ username, password })).then((result) => {
       console.log('Login result:', result);
       if (result.meta.requestStatus === 'fulfilled') {
         navigate('/');
+      } else if (result.meta.requestStatus === 'rejected') {
+        const errorMessage = result.payload?.error || 'An error occurred during login';
+        console.log('Login error:', errorMessage); // Debug log
+        if (errorMessage === 'This account is blocked') {
+          alert('Your account is blocked. Please contact support.');
+          setErrors((prev) => ({
+            ...prev,
+            login: 'Your account is blocked. Please contact support.',
+          }));
+        } else {
+          setErrors((prev) => ({
+            ...prev,
+            login: errorMessage,
+          }));
+        }
       }
     });
   };
 
   return (
+    
     <div className="login-container">
       <h2>Login to Your Account</h2>
-      {error && <p className="error">{error.error || 'An error occurred during login'}</p>}
+      {errors.login && <p className="error">{errors.login}</p>}
       <form onSubmit={handleSubmit} className="login-form">
         <div className="form-group">
           <input
@@ -85,7 +105,10 @@ const Login = () => {
         </button>
       </form>
       <div className="register-link">
-        <p>Don't have an account? <Link to="/register">Register</Link></p>
+        <p>
+          Don't have an account? <Link to="/register">Register</Link>
+        </p>
+        
       </div>
     </div>
   );
