@@ -8,7 +8,7 @@ const getCookie = (name) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: 'https://blog-api.midhung.in/api',
   withCredentials: true,
 });
 
