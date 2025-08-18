@@ -56,16 +56,37 @@ const CommentManagement = () => {
     setProcessingComments(prev => new Set(prev).add(commentId));
     try {
       await axiosInstance.post(`/posts/comments/${commentId}/approve/`, { is_approved: isApproved });
-      setComments(comments.map(c => (c.id === commentId ? { ...c, is_approved: isApproved } : c)));
       
-      // Refresh the post to update comment count
+      // Update local state instead of refetching
+      setComments(prevComments => {
+        const updatedComments = prevComments.map(c => 
+          c.id === commentId ? { ...c, is_approved: isApproved } : c
+        );
+        
+        // If current filter doesn't match the new status, remove the comment from view
+        if (filter === 'pending' && isApproved) {
+          return updatedComments.filter(c => c.id !== commentId);
+        } else if (filter === 'approved' && !isApproved) {
+          return updatedComments.filter(c => c.id !== commentId);
+        }
+        
+        return updatedComments;
+      });
+      
+      // Update pagination count if comment was removed from current view
+      if ((filter === 'pending' && isApproved) || (filter === 'approved' && !isApproved)) {
+        setCommentsPagination(prev => ({
+          ...prev,
+          count: Math.max(0, prev.count - 1)
+        }));
+      }
+      
+      // Refresh the post to update comment count (this doesn't cause a page refresh)
       const comment = comments.find(c => c.id === commentId);
       if (comment && comment.post) {
         dispatch(fetchPost(comment.post));
       }
       
-      // Refresh the list to maintain filter consistency
-      fetchComments();
     } catch (err) {
       console.error('Comment action error:', err.response?.data || err.message);
       setError(err.response?.data || 'Error updating comment');
@@ -83,8 +104,16 @@ const CommentManagement = () => {
       setProcessingComments(prev => new Set(prev).add(commentId));
       try {
         await axiosInstance.delete(`/posts/comments/${commentId}/`);
-        setComments(comments.filter(c => c.id !== commentId));
-        fetchComments();
+        
+        // Remove comment from local state
+        setComments(prevComments => prevComments.filter(c => c.id !== commentId));
+        
+        // Update pagination count
+        setCommentsPagination(prev => ({
+          ...prev,
+          count: Math.max(0, prev.count - 1)
+        }));
+        
       } catch (err) {
         console.error('Delete comment error:', err.response?.data || err.message);
         setError(err.response?.data || 'Error deleting comment');
@@ -112,7 +141,24 @@ const CommentManagement = () => {
             axiosInstance.post(`/posts/comments/${comment.id}/approve/`, { is_approved: true })
           )
         );
-        fetchComments();
+        
+        // Update local state instead of refetching
+        if (filter === 'pending') {
+          // If viewing pending comments, remove all approved ones from view
+          setComments(prevComments => prevComments.filter(c => c.is_approved));
+          setCommentsPagination(prev => ({
+            ...prev,
+            count: Math.max(0, prev.count - pendingComments.length)
+          }));
+        } else {
+          // If viewing all or approved comments, update their status
+          setComments(prevComments => 
+            prevComments.map(c => 
+              pendingComments.some(pc => pc.id === c.id) ? { ...c, is_approved: true } : c
+            )
+          );
+        }
+        
       } catch (err) {
         console.error('Bulk approve error:', err);
         setError('Error approving comments');
@@ -154,6 +200,7 @@ const CommentManagement = () => {
   if (loading) return <p className="loading">Loading comment management...</p>;
   if (error) return <p className="error">Error: {JSON.stringify(error)}</p>;
 
+  // Calculate counts from current comments in view
   const pendingCount = comments.filter(c => !c.is_approved).length;
   const approvedCount = comments.filter(c => c.is_approved).length;
 
