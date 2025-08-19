@@ -452,3 +452,51 @@
     width: 100%;
   }
 }
+/* Add these styles to your existing PostDetails.css file */
+
+.like-button {
+  background-color: #f0f0f0;
+  border: 2px solid #ddd;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.like-button:hover {
+  background-color: #e0e0e0;
+  border-color: #ccc;
+}
+
+.like-button.liked {
+  background-color: #ff6b6b;
+  border-color: #ff5252;
+  color: white;
+}
+
+.like-button.liked:hover {
+  background-color: #ff5252;
+  border-color: #f44336;
+}
+
+/* Optional: Add some animation when the state changes */
+.like-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.like-button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transition: width 0.3s ease, height 0.3s ease;
+  transform: translate(-50%, -50%);
+}
+
+.like-button:active::before {
+  width: 100px;
+  height: 100px;
+}

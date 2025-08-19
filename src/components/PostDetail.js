@@ -43,7 +43,7 @@ const PostDetail = () => {
     dispatch(createComment({ postId: id, content: comment })).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setComment('');
-        dispatch(fetchPost(id)); // Refresh post to update comments_count
+        dispatch(fetchPost(id)); 
       }
     });
   };
@@ -81,12 +81,11 @@ const PostDetail = () => {
     setEditCommentError('');
   };
 
-  const handleLike = () => {
-    dispatch(toggleLike({ postId: id, isLike: true }));
-  };
+  // Check if current user has liked this post
+  const hasUserLiked = post?.user_has_liked || false;
 
-  const handleUnlike = () => {
-    dispatch(toggleLike({ postId: id, isLike: false }));
+  const handleLikeToggle = () => {
+    dispatch(toggleLike({ postId: id, isLike: !hasUserLiked }));
   };
 
   const handleDeleteClick = () => {
@@ -189,11 +188,11 @@ const PostDetail = () => {
       {isAuthenticated && (
         <div>
           <div className="action-buttons">
-            <button onClick={handleLike} className="action-button like-button">
-              Like
-            </button>
-            <button onClick={handleUnlike} className="action-button unlike-button">
-              Unlike
+            <button 
+              onClick={handleLikeToggle} 
+              className={`action-button like-button ${hasUserLiked ? 'liked' : ''}`}
+            >
+              {hasUserLiked ? '❤️ Liked' : '🤍 Like'}
             </button>
           </div>
           <form onSubmit={handleCommentSubmit} className="comment-form">
