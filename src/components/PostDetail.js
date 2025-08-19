@@ -145,17 +145,9 @@ const PostDetail = () => {
     return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
   };
 
-  // Check if current user has liked this post
-  const isLikedByUser = () => {
-    return isAuthenticated && post && post.liked_by_users && 
-           post.liked_by_users.some(likedUser => likedUser === user?.username || likedUser.username === user?.username);
-  };
-
   if (loading) return <p className="loading">Loading...</p>;
   if (error) return <p className="error-message">Error: {JSON.stringify(error)}</p>;
   if (!post) return <p className="no-post">No post found</p>;
-
-  const userHasLiked = isLikedByUser();
 
   return (
     <div className="post-detail-container">
@@ -197,18 +189,10 @@ const PostDetail = () => {
       {isAuthenticated && (
         <div>
           <div className="action-buttons">
-            <button 
-              onClick={handleLike} 
-              className={`action-button like-button ${userHasLiked ? 'liked' : ''}`}
-              disabled={userHasLiked}
-            >
-              {userHasLiked ? '❤️ Liked' : '🤍 Like'}
+            <button onClick={handleLike} className="action-button like-button">
+              Like
             </button>
-            <button 
-              onClick={handleUnlike} 
-              className={`action-button unlike-button ${!userHasLiked ? 'disabled' : ''}`}
-              disabled={!userHasLiked}
-            >
+            <button onClick={handleUnlike} className="action-button unlike-button">
               Unlike
             </button>
           </div>
