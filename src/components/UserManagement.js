@@ -86,7 +86,7 @@ const UserManagement = () => {
       await axiosInstance.patch(`/auth/users/${userId}/`, { is_blocked: !currentStatus });
       setUsers(users.map(u => (u.id === userId ? { ...u, is_blocked: !currentStatus } : u)));
       setNotification(currentStatus ? 'User unblocked!' : 'User blocked!');
-      setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
+      setTimeout(() => setNotification(''), 3000); 
     } catch (err) {
       console.error('Toggle block status error:', err.response?.data || err.message);
       setError(err.response?.data || 'Error updating user block status');
@@ -187,7 +187,7 @@ const UserManagement = () => {
                     )}
                   </div>
                   <div className="action-buttons">
-                    <button
+                    {/* <button
                       onClick={() => handleToggleStaffStatus(userItem.id, userItem.is_staff)}
                       className={`toggle-button ${userItem.is_staff ? 'remove-staff' : 'make-staff'}`}
                       disabled={processingUsers.has(userItem.id)}
@@ -197,7 +197,7 @@ const UserManagement = () => {
                         : userItem.is_staff
                           ? 'Remove Staff'
                           : 'Make Staff'}
-                    </button>
+                    </button> */}
                     {userItem.id !== user.id && (
                       <button
                         onClick={() => handleToggleBlockStatus(userItem.id, userItem.is_blocked)}
