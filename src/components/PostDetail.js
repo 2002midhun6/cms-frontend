@@ -17,6 +17,7 @@ const PostDetail = () => {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState('');
   const [editCommentError, setEditCommentError] = useState('');
+  const [notification, setNotification] = useState('');
 
   useEffect(() => {
     dispatch(fetchPost(id));
@@ -43,7 +44,12 @@ const PostDetail = () => {
     dispatch(createComment({ postId: id, content: comment })).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setComment('');
-        dispatch(fetchPost(id)); 
+        dispatch(fetchPost(id));
+        setNotification('Comment added!');
+        setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
+      } else {
+        setNotification('Failed to add comment!');
+        setTimeout(() => setNotification(''), 3000);
       }
     });
   };
@@ -62,11 +68,10 @@ const PostDetail = () => {
       return;
     }
     setEditCommentError('');
-    
-    dispatch(updateComment({ 
-      commentId: editingCommentId, 
-      content: editingCommentContent, 
-      postId: parseInt(id) 
+    dispatch(updateComment({
+      commentId: editingCommentId,
+      content: editingCommentContent,
+      postId: parseInt(id)
     })).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setEditingCommentId(null);
@@ -82,11 +87,23 @@ const PostDetail = () => {
   };
 
   const handleLike = () => {
-    dispatch(toggleLike({ postId: id, isLike: true }));
+    dispatch(toggleLike({ postId: id, isLike: true })).then((result) => {
+      if (result.meta.requestStatus === 'fulfilled') {
+        setNotification('You liked the post!');
+        setTimeout(() => setNotification(''), 3000);
+        dispatch(fetchPost(id)); // Refetch to update likers
+      }
+    });
   };
 
   const handleUnlike = () => {
-    dispatch(toggleLike({ postId: id, isLike: false }));
+    dispatch(toggleLike({ postId: id, isLike: false })).then((result) => {
+      if (result.meta.requestStatus === 'fulfilled') {
+        setNotification('You unliked the post!');
+        setTimeout(() => setNotification(''), 3000);
+        dispatch(fetchPost(id)); // Refetch to update likers
+      }
+    });
   };
 
   const handleDeleteClick = () => {
@@ -115,9 +132,9 @@ const PostDetail = () => {
 
   const handleCommentDeleteConfirm = async () => {
     try {
-      const result = await dispatch(deleteComment({ 
-        commentId: showCommentDeleteConfirm, 
-        postId: parseInt(id) 
+      const result = await dispatch(deleteComment({
+        commentId: showCommentDeleteConfirm,
+        postId: parseInt(id)
       }));
       if (result.meta.requestStatus === 'fulfilled') {
         dispatch(fetchPost(id));
@@ -132,18 +149,17 @@ const PostDetail = () => {
     setShowCommentDeleteConfirm(null);
   };
 
-  // Check if current user can edit/delete this post
   const canEditPost = isAuthenticated && post && (post.author === user?.username || user?.is_staff);
 
-  // Check if current user can delete a specific comment
   const canDeleteComment = (commentAuthor) => {
     return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
   };
 
-  // Check if current user can edit a specific comment
   const canEditComment = (commentAuthor) => {
     return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
   };
+
+  const hasLiked = post?.likers?.includes(user?.id);
 
   if (loading) return <p className="loading">Loading...</p>;
   if (error) return <p className="error-message">Error: {JSON.stringify(error)}</p>;
@@ -158,7 +174,7 @@ const PostDetail = () => {
             <Link to={`/posts/${id}/edit`} className="edit-button">
               Edit
             </Link>
-            <button 
+            <button
               onClick={handleDeleteClick}
               className="delete-button"
               disabled={deleteLoading}
@@ -172,14 +188,14 @@ const PostDetail = () => {
       <p className="post-meta">
         By {post.author} | {post.read_count} reads | {post.likes_count} likes
       </p>
-      
+
       {post.image && <img src={post.image} alt={post.title} className="post-image" />}
       {post.file && (
         <a href={post.file} className="post-file-link">
           Download File
         </a>
       )}
-      
+
       <div className="post-content">
         {post.content.split('\n').map((paragraph, index) => (
           <p key={index}>{paragraph}</p>
@@ -189,10 +205,18 @@ const PostDetail = () => {
       {isAuthenticated && (
         <div>
           <div className="action-buttons">
-            <button onClick={handleLike} className="action-button like-button">
-              Like
+            <button
+              onClick={hasLiked ? handleUnlike : handleLike}
+              className={`action-button ${hasLiked ? 'liked-button' : 'like-button'}`}
+              disabled={loading}
+            >
+              {hasLiked ? 'Liked' : 'Like'}
             </button>
-            <button onClick={handleUnlike} className="action-button unlike-button">
+            <button
+              onClick={handleUnlike}
+              className="action-button unlike-button"
+              disabled={loading || !hasLiked}
+            >
               Unlike
             </button>
           </div>
@@ -210,7 +234,13 @@ const PostDetail = () => {
           </form>
         </div>
       )}
-      
+
+      {notification && (
+        <div className="notification">
+          {notification}
+        </div>
+      )}
+
       <div className="comments-section">
         <h3>Comments</h3>
         <ul className="comments-list">
@@ -229,15 +259,15 @@ const PostDetail = () => {
                         />
                         {editCommentError && <p className="error">{editCommentError}</p>}
                         <div className="edit-comment-actions">
-                          <button 
-                            type="submit" 
+                          <button
+                            type="submit"
                             className="save-comment-button"
                             disabled={updateCommentLoading}
                           >
                             {updateCommentLoading ? 'Saving...' : 'Save'}
                           </button>
-                          <button 
-                            type="button" 
+                          <button
+                            type="button"
                             onClick={handleCancelEdit}
                             className="cancel-edit-button"
                             disabled={updateCommentLoading}
@@ -260,7 +290,7 @@ const PostDetail = () => {
                   {editingCommentId !== comment.id && (
                     <div className="comment-actions">
                       {canEditComment(comment.author) && (
-                        <button 
+                        <button
                           onClick={() => handleEditComment(comment.id, comment.content)}
                           className="edit-comment-button"
                           disabled={updateCommentLoading}
@@ -269,7 +299,7 @@ const PostDetail = () => {
                         </button>
                       )}
                       {canDeleteComment(comment.author) && (
-                        <button 
+                        <button
                           onClick={() => handleCommentDeleteClick(comment.id)}
                           className="delete-comment-button"
                           disabled={deleteCommentLoading}
@@ -293,14 +323,14 @@ const PostDetail = () => {
             <h3>Confirm Delete</h3>
             <p>Are you sure you want to delete this post? This action cannot be undone.</p>
             <div className="modal-actions">
-              <button 
+              <button
                 onClick={handleDeleteConfirm}
                 className="confirm-delete-button"
                 disabled={deleteLoading}
               >
                 {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
               </button>
-              <button 
+              <button
                 onClick={handleDeleteCancel}
                 className="cancel-button"
                 disabled={deleteLoading}
@@ -318,14 +348,14 @@ const PostDetail = () => {
             <h3>Confirm Delete Comment</h3>
             <p>Are you sure you want to delete this comment? This action cannot be undone.</p>
             <div className="modal-actions">
-              <button 
+              <button
                 onClick={handleCommentDeleteConfirm}
                 className="confirm-delete-button"
                 disabled={deleteCommentLoading}
               >
                 {deleteCommentLoading ? 'Deleting...' : 'Yes, Delete'}
               </button>
-              <button 
+              <button
                 onClick={handleCommentDeleteCancel}
                 className="cancel-button"
                 disabled={deleteCommentLoading}
