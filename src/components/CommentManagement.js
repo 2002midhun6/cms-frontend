@@ -18,6 +18,7 @@ const CommentManagement = () => {
   const [error, setError] = useState(null);
   const [processingComments, setProcessingComments] = useState(new Set());
   const [filter, setFilter] = useState('all'); // 'all', 'pending', 'approved'
+  const [notification, setNotification] = useState(''); // New state for notifications
 
   useEffect(() => {
     if (!isAuthenticated || !user?.is_staff) {
@@ -81,11 +82,15 @@ const CommentManagement = () => {
         }));
       }
       
-      // Refresh the post to update comment count (this doesn't cause a page refresh)
+      // Refresh the post to update comment count
       const comment = comments.find(c => c.id === commentId);
       if (comment && comment.post) {
         dispatch(fetchPost(comment.post));
       }
+
+      // Show notification
+      setNotification(isApproved ? 'Comment approved!' : 'Comment rejected!');
+      setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
       
     } catch (err) {
       console.error('Comment action error:', err.response?.data || err.message);
@@ -113,6 +118,10 @@ const CommentManagement = () => {
           ...prev,
           count: Math.max(0, prev.count - 1)
         }));
+
+        // Show notification
+        setNotification('Comment deleted!');
+        setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
         
       } catch (err) {
         console.error('Delete comment error:', err.response?.data || err.message);
@@ -158,6 +167,10 @@ const CommentManagement = () => {
             )
           );
         }
+
+        // Show notification
+        setNotification(`${pendingComments.length} comment${pendingComments.length > 1 ? 's' : ''} approved!`);
+        setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
         
       } catch (err) {
         console.error('Bulk approve error:', err);
@@ -179,7 +192,6 @@ const CommentManagement = () => {
     navigate('/');
   };
 
-  // Pagination handlers
   const handleCommentsNextPage = () => {
     if (commentsPagination.next) {
       setCommentsPage(prev => prev + 1);
@@ -200,7 +212,6 @@ const CommentManagement = () => {
   if (loading) return <p className="loading">Loading comment management...</p>;
   if (error) return <p className="error">Error: {JSON.stringify(error)}</p>;
 
-  // Calculate counts from current comments in view
   const pendingCount = comments.filter(c => !c.is_approved).length;
   const approvedCount = comments.filter(c => c.is_approved).length;
 
@@ -214,6 +225,12 @@ const CommentManagement = () => {
           <button onClick={handleLogout} className="logout-button">Logout</button>
         </div>
       </div>
+
+      {notification && (
+        <div className="notification">
+          {notification}
+        </div>
+      )}
 
       <div className="stats-section">
         <div className="stat-card">
