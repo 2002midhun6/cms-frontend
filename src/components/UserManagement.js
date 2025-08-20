@@ -16,6 +16,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [processingUsers, setProcessingUsers] = useState(new Set());
+  const [notification, setNotification] = useState(''); // New state for notifications
 
   useEffect(() => {
     if (!isAuthenticated || !user?.is_staff) {
@@ -84,6 +85,8 @@ const UserManagement = () => {
     try {
       await axiosInstance.patch(`/auth/users/${userId}/`, { is_blocked: !currentStatus });
       setUsers(users.map(u => (u.id === userId ? { ...u, is_blocked: !currentStatus } : u)));
+      setNotification(currentStatus ? 'User unblocked!' : 'User blocked!');
+      setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
     } catch (err) {
       console.error('Toggle block status error:', err.response?.data || err.message);
       setError(err.response?.data || 'Error updating user block status');
@@ -135,6 +138,12 @@ const UserManagement = () => {
         </div>
       </div>
 
+      {notification && (
+        <div className="notification">
+          {notification}
+        </div>
+      )}
+
       <div className="stats-section">
         <div className="stat-card">
           <h3>Total Users</h3>
@@ -178,19 +187,17 @@ const UserManagement = () => {
                     )}
                   </div>
                   <div className="action-buttons">
-                    {/* {!userItem.is_superuser && (
-                      <button
-                        onClick={() => handleToggleStaffStatus(userItem.id, userItem.is_staff)}
-                        className={`toggle-button ${userItem.is_staff ? 'remove-staff' : 'make-staff'}`}
-                        disabled={processingUsers.has(userItem.id)}
-                      >
-                        {processingUsers.has(userItem.id)
-                          ? 'Processing...'
-                          : userItem.is_staff
-                            ? 'Remove Staff'
-                            : 'Make Staff'}
-                      </button>
-                    )} */}
+                    <button
+                      onClick={() => handleToggleStaffStatus(userItem.id, userItem.is_staff)}
+                      className={`toggle-button ${userItem.is_staff ? 'remove-staff' : 'make-staff'}`}
+                      disabled={processingUsers.has(userItem.id)}
+                    >
+                      {processingUsers.has(userItem.id)
+                        ? 'Processing...'
+                        : userItem.is_staff
+                          ? 'Remove Staff'
+                          : 'Make Staff'}
+                    </button>
                     {userItem.id !== user.id && (
                       <button
                         onClick={() => handleToggleBlockStatus(userItem.id, userItem.is_blocked)}

@@ -6,7 +6,19 @@
   padding: 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
-
+/* Existing styles in UserManagement.css remain unchanged, add this at the end */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #4caf50; /* Green for success */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 16px;
+}
 .header {
   display: flex;
   justify-content: space-between;
