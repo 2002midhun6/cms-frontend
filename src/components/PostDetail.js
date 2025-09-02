@@ -14,6 +14,7 @@ const PostDetail = () => {
   const [commentError, setCommentError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCommentDeleteConfirm, setShowCommentDeleteConfirm] = useState(null);
+  const [showCommentSubmitConfirm, setShowCommentSubmitConfirm] = useState(false); // New state for comment submission confirmation
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState('');
   const [editCommentError, setEditCommentError] = useState('');
@@ -42,6 +43,12 @@ const PostDetail = () => {
       return;
     }
     setCommentError('');
+    // Show confirmation dialog instead of directly submitting
+    setShowCommentSubmitConfirm(true);
+  };
+
+  const handleCommentSubmitConfirm = () => {
+    setShowCommentSubmitConfirm(false);
     dispatch(createComment({ postId: id, content: comment })).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setComment('');
@@ -53,6 +60,10 @@ const PostDetail = () => {
         setTimeout(() => setNotification(''), 3000);
       }
     });
+  };
+
+  const handleCommentSubmitCancel = () => {
+    setShowCommentSubmitConfirm(false);
   };
 
   const handleEditComment = (commentId, currentContent) => {
@@ -391,6 +402,35 @@ const PostDetail = () => {
                 onClick={handleCommentDeleteCancel}
                 className="cancel-button"
                 disabled={deleteCommentLoading}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCommentSubmitConfirm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirm Submit Comment</h3>
+            <p>Are you sure you want to submit this comment?</p>
+            <div className="comment-preview">
+              <strong>Your comment:</strong>
+              <p>"{comment}"</p>
+            </div>
+            <div className="modal-actions">
+              <button
+                onClick={handleCommentSubmitConfirm}
+                className="confirm-submit-button"
+                disabled={loading}
+              >
+                {loading ? 'Submitting...' : 'Yes, Submit'}
+              </button>
+              <button
+                onClick={handleCommentSubmitCancel}
+                className="cancel-button"
+                disabled={loading}
               >
                 Cancel
               </button>
