@@ -126,6 +126,8 @@ const PostDetail = () => {
 
   const handleUnlike = async () => {
     
+    if (likeLoading || !hasLiked) return;
+    
     setLikeLoading(true);
     
     try {
