@@ -87,28 +87,51 @@ const PostDetail = () => {
     setEditCommentError('');
   };
 
-  // Fixed toggle function for like/unlike
-  const handleLikeToggle = async () => {
-    if (likeLoading) return;
+  // Separate functions for like and unlike
+  const handleLike = async () => {
+    if (likeLoading || hasLiked) return; // Don't allow liking if already liked
     
     setLikeLoading(true);
-    const isCurrentlyLiked = hasLiked;
-    const isLike = !isCurrentlyLiked; // Toggle the current state
     
     try {
-      const result = await dispatch(toggleLike({ postId: id, isLike }));
+      const result = await dispatch(toggleLike({ postId: id, isLike: true }));
       if (result.meta.requestStatus === 'fulfilled') {
-        setNotification(isLike ? 'You liked the post!' : 'You unliked the post!');
+        setNotification('You liked the post!');
         setTimeout(() => setNotification(''), 3000);
         // Refetch the post to get updated like data
         await dispatch(fetchPost(id));
       } else {
-        setNotification('Failed to update like status!');
+        setNotification('Failed to like the post!');
         setTimeout(() => setNotification(''), 3000);
       }
     } catch (error) {
-      console.error('Error toggling like:', error);
-      setNotification('Error updating like status!');
+      console.error('Error liking post:', error);
+      setNotification('Error liking the post!');
+      setTimeout(() => setNotification(''), 3000);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
+
+  const handleUnlike = async () => {
+    if (likeLoading || !hasLiked) return; // Don't allow unliking if not liked
+    
+    setLikeLoading(true);
+    
+    try {
+      const result = await dispatch(toggleLike({ postId: id, isLike: false }));
+      if (result.meta.requestStatus === 'fulfilled') {
+        setNotification('You unliked the post!');
+        setTimeout(() => setNotification(''), 3000);
+        // Refetch the post to get updated like data
+        await dispatch(fetchPost(id));
+      } else {
+        setNotification('Failed to unlike the post!');
+        setTimeout(() => setNotification(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error unliking post:', error);
+      setNotification('Error unliking the post!');
       setTimeout(() => setNotification(''), 3000);
     } finally {
       setLikeLoading(false);
@@ -216,11 +239,18 @@ const PostDetail = () => {
         <div>
           <div className="action-buttons">
             <button
-              onClick={handleLikeToggle}
-              className={`action-button ${hasLiked ? 'liked-button' : 'like-button'}`}
-              disabled={likeLoading}
+              onClick={handleLike}
+              className={`action-button like-button ${hasLiked ? 'disabled-like' : 'active-like'}`}
+              disabled={likeLoading || hasLiked}
             >
-              {likeLoading ? 'Updating...' : (hasLiked ? 'Unlike' : 'Like')}
+              {likeLoading && !hasLiked ? 'Liking...' : 'Like'}
+            </button>
+            <button
+              onClick={handleUnlike}
+              className={`action-button unlike-button ${!hasLiked ? 'disabled-unlike' : 'active-unlike'}`}
+              disabled={likeLoading || !hasLiked}
+            >
+              {likeLoading && hasLiked ? 'Unliking...' : 'Unlike'}
             </button>
           </div>
           <form onSubmit={handleCommentSubmit} className="comment-form">
