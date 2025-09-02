@@ -113,8 +113,28 @@ const PostDetail = () => {
     }
   };
 
-  const handleUnlike = () => {
-    dispatch(toggleLike({ postId: id, isLike: false }));
+  const handleUnlike = async () => {
+    
+    setLikeLoading(true);
+    
+    try {
+      const result = await dispatch(toggleLike({ postId: id, isLike: false }));
+      if (result.meta.requestStatus === 'fulfilled') {
+        setNotification('You unliked the post!');
+        setTimeout(() => setNotification(''), 3000);
+        
+        await dispatch(fetchPost(id));
+      } else {
+        setNotification('Failed to unlike the post!');
+        setTimeout(() => setNotification(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error unliking post:', error);
+      setNotification('Error unliking the post!');
+      setTimeout(() => setNotification(''), 3000);
+    } finally {
+      setLikeLoading(false);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -224,8 +244,12 @@ const PostDetail = () => {
             >
               {likeLoading && !hasLiked ? 'Liking...' : 'Like'}
             </button>
-             <button onClick={handleUnlike} className="action-button unlike-button">
-              Unlike
+            <button
+              onClick={handleUnlike}
+              className={`action-button unlike-button ${!hasLiked ? 'disabled-unlike' : 'active-unlike'}`}
+              disabled={likeLoading || !hasLiked}
+            >
+              {likeLoading && hasLiked ? 'Unliking...' : 'Unlike'}
             </button>
           </div>
           <form onSubmit={handleCommentSubmit} className="comment-form">
