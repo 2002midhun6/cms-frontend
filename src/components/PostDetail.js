@@ -46,7 +46,7 @@ const PostDetail = () => {
         setComment('');
         dispatch(fetchPost(id));
         setNotification('Comment added!');
-        setTimeout(() => setNotification(''), 3000); // Clear notification after 3 seconds
+        setTimeout(() => setNotification(''), 3000);
       } else {
         setNotification('Failed to add comment!');
         setTimeout(() => setNotification(''), 3000);
@@ -86,20 +86,12 @@ const PostDetail = () => {
     setEditCommentError('');
   };
 
-  const handleLike = () => {
-    dispatch(toggleLike({ postId: id, isLike: true })).then((result) => {
+  // Single toggle function for like/unlike
+  const handleLikeToggle = () => {
+    const isLike = !hasLiked; // Toggle the current state
+    dispatch(toggleLike({ postId: id, isLike })).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
-        setNotification('You liked the post!');
-        setTimeout(() => setNotification(''), 3000);
-        dispatch(fetchPost(id)); // Refetch to update likers
-      }
-    });
-  };
-
-  const handleUnlike = () => {
-    dispatch(toggleLike({ postId: id, isLike: false })).then((result) => {
-      if (result.meta.requestStatus === 'fulfilled') {
-        setNotification('You unliked the post!');
+        setNotification(isLike ? 'You liked the post!' : 'You unliked the post!');
         setTimeout(() => setNotification(''), 3000);
         dispatch(fetchPost(id)); // Refetch to update likers
       }
@@ -206,18 +198,11 @@ const PostDetail = () => {
         <div>
           <div className="action-buttons">
             <button
-              onClick={hasLiked ? handleUnlike : handleLike}
+              onClick={handleLikeToggle}
               className={`action-button ${hasLiked ? 'liked-button' : 'like-button'}`}
               disabled={loading}
             >
-              {hasLiked ? 'Liked' : 'Like'}
-            </button>
-            <button
-              onClick={handleUnlike}
-              className="action-button unlike-button"
-              disabled={loading || !hasLiked}
-            >
-              Unlike
+              {hasLiked ? 'Unlike' : 'Like'}
             </button>
           </div>
           <form onSubmit={handleCommentSubmit} className="comment-form">
