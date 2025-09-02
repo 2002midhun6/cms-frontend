@@ -18,6 +18,7 @@ const PostDetail = () => {
   const [editingCommentContent, setEditingCommentContent] = useState('');
   const [editCommentError, setEditCommentError] = useState('');
   const [notification, setNotification] = useState('');
+  const [likeLoading, setLikeLoading] = useState(false);
 
   useEffect(() => {
     dispatch(fetchPost(id));
@@ -86,16 +87,32 @@ const PostDetail = () => {
     setEditCommentError('');
   };
 
-  // Single toggle function for like/unlike
-  const handleLikeToggle = () => {
-    const isLike = !hasLiked; // Toggle the current state
-    dispatch(toggleLike({ postId: id, isLike })).then((result) => {
+  // Fixed toggle function for like/unlike
+  const handleLikeToggle = async () => {
+    if (likeLoading) return;
+    
+    setLikeLoading(true);
+    const isCurrentlyLiked = hasLiked;
+    const isLike = !isCurrentlyLiked; // Toggle the current state
+    
+    try {
+      const result = await dispatch(toggleLike({ postId: id, isLike }));
       if (result.meta.requestStatus === 'fulfilled') {
         setNotification(isLike ? 'You liked the post!' : 'You unliked the post!');
         setTimeout(() => setNotification(''), 3000);
-        dispatch(fetchPost(id)); // Refetch to update likers
+        // Refetch the post to get updated like data
+        await dispatch(fetchPost(id));
+      } else {
+        setNotification('Failed to update like status!');
+        setTimeout(() => setNotification(''), 3000);
       }
-    });
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      setNotification('Error updating like status!');
+      setTimeout(() => setNotification(''), 3000);
+    } finally {
+      setLikeLoading(false);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -151,6 +168,7 @@ const PostDetail = () => {
     return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
   };
 
+  // Check if user has liked the post
   const hasLiked = post?.likers?.includes(user?.id);
 
   if (loading) return <p className="loading">Loading...</p>;
@@ -200,9 +218,9 @@ const PostDetail = () => {
             <button
               onClick={handleLikeToggle}
               className={`action-button ${hasLiked ? 'liked-button' : 'like-button'}`}
-              disabled={loading}
+              disabled={likeLoading}
             >
-              {hasLiked ? 'Unlike' : 'Like'}
+              {likeLoading ? 'Updating...' : (hasLiked ? 'Unlike' : 'Like')}
             </button>
           </div>
           <form onSubmit={handleCommentSubmit} className="comment-form">
