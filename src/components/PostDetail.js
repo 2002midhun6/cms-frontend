@@ -260,7 +260,7 @@ const PostDetail = () => {
             <button
               onClick={handleUnlike}
               className={`action-button unlike-button ${!hasLiked ? 'disabled-unlike' : 'active-unlike'}`}
-              disabled={likeLoading || !hasLiked}
+              
             >
               {likeLoading && hasLiked ? 'Unliking...' : 'Unlike'}
             </button>
