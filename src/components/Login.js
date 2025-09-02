@@ -9,14 +9,14 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
-  const { loading } = useSelector((state) => state.auth); // Removed error from selector
+  const { loading } = useSelector((state) => state.auth);
   const navigate = useNavigate();
   const { error } = useSelector((state) => state.auth);
 
   const validateForm = () => {
     const newErrors = {};
 
-    // Username validation
+    
     if (!username.trim()) {
       newErrors.username = 'Username is required';
     } else if (username.length < 3) {
@@ -64,6 +64,7 @@ const Login = () => {
             ...prev,
             login: 'Your account is blocked. Please contact support.',
           }));
+           navigate('/');
         } else {
           setErrors((prev) => ({
             ...prev,
