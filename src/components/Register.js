@@ -14,14 +14,26 @@ const Register = () => {
   const { loading, error } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
+  const getPasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength += 1;
+    if (/[A-Z]/.test(password)) strength += 1;
+    if (/[a-z]/.test(password)) strength += 1;
+    if (/[0-9]/.test(password)) strength += 1;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength += 1;
+    return strength;
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
-    // Username validation: 3-20 characters, alphanumeric with underscores
+    // Username validation: 3-20 characters, must contain at least one letter, allows alphanumeric and underscores
     if (!username) {
       newErrors.username = 'Username is required';
     } else if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
-      newErrors.username = 'Username must be 3-20 characters, alphanumeric or underscores';
+      newErrors.username = 'Username must be 3-20 characters, using letters, numbers, or underscores';
+    } else if (!/[a-zA-Z]/.test(username)) {
+      newErrors.username = 'Username must contain at least one letter';
     }
 
     // Email validation: basic email format
@@ -31,11 +43,17 @@ const Register = () => {
       newErrors.email = 'Invalid email format';
     }
 
-    // Password validation: at least 8 characters, one number, one letter
+    // Password validation: at least 8 characters, one uppercase, one lowercase, one number, one special character
     if (!password) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
-      newErrors.password = 'Password must be at least 8 characters with a letter and a number';
+    } else if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[!@#$%^&*(),.?":{}|<>]/.test(password)
+    ) {
+      newErrors.password = 'Password must be at least 8 characters and include an uppercase letter, lowercase letter, number, and special character';
     }
 
     // Bio is optional, but limit to 200 characters
@@ -58,19 +76,23 @@ const Register = () => {
     }
   };
 
+  const passwordStrength = getPasswordStrength(password);
+  const strengthText = passwordStrength === 5 ? 'Strong' : passwordStrength >= 3 ? 'Moderate' : 'Weak';
+  const strengthColor = passwordStrength === 5 ? 'bg-green-500' : passwordStrength >= 3 ? 'bg-yellow-500' : 'bg-red-500';
+
   return (
-    <div className="register-container">
-      <h2 className="register-title">Register</h2>
-      <form onSubmit={handleSubmit} className="register-form">
+    <div className="register-container max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+      <h2 className="register-title text-2xl font-bold text-center mb-6">Create Your Account</h2>
+      <div className="register-form space-y-4">
         <div className="form-group">
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
-            className={`form-input ${errors.username ? 'input-error' : ''}`}
+            className={`form-input w-full p-2 border rounded ${errors.username ? 'border-red-500' : 'border-gray-300'}`}
           />
-          {errors.username && <p className="error-message">{errors.username}</p>}
+          {errors.username && <p className="error-message text-red-500 text-sm mt-1">{errors.username}</p>}
         </div>
         <div className="form-group">
           <input
@@ -78,9 +100,9 @@ const Register = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className={`form-input ${errors.email ? 'input-error' : ''}`}
+            className={`form-input w-full p-2 border rounded ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
           />
-          {errors.email && <p className="error-message">{errors.email}</p>}
+          {errors.email && <p className="error-message text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
         <div className="form-group">
           <input
@@ -88,26 +110,37 @@ const Register = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className={`form-input ${errors.password ? 'input-error' : ''}`}
+            className={`form-input w-full p-2 border rounded ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
           />
-          {errors.password && <p className="error-message">{errors.password}</p>}
+          {errors.password && <p className="error-message text-red-500 text-sm mt-1">{errors.password}</p>}
+          {password && (
+            <div className="password-strength mt-2">
+              <div className={`h-2 rounded ${strengthColor}`} style={{ width: `${(passwordStrength / 5) * 100}%` }}></div>
+              <p className="text-sm mt-1">Password Strength: {strengthText}</p>
+            </div>
+          )}
         </div>
         <div className="form-group">
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             placeholder="Bio (optional)"
-            className={`form-textarea ${errors.bio ? 'input-error' : ''}`}
+            className={`form-textarea w-full p-2 border rounded ${errors.bio ? 'border-red-500' : 'border-gray-300'}`}
           />
-          {errors.bio && <p className="error-message">{errors.bio}</p>}
+          {errors.bio && <p className="error-message text-red-500 text-sm mt-1">{errors.bio}</p>}
         </div>
-        <button type="submit" disabled={loading} className="submit-button">
+        <button
+          type="submit"
+          disabled={loading}
+          onClick={handleSubmit}
+          className={`submit-button w-full p-2 rounded text-white ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'}`}
+        >
           {loading ? 'Registering...' : 'Register'}
         </button>
-        {error && <p className="error-message server-error">Error: {JSON.stringify(error)}</p>}
-      </form>
-      <p className="login-link">
-        Already have an account? <a href="/login">Login</a>
+        {error && <p className="error-message server-error text-red-500 text-sm mt-2">Error: {JSON.stringify(error)}</p>}
+      </div>
+      <p className="login-link text-center mt-4">
+        Already have an account? <a href="/login" className="text-blue-500 hover:underline">Login</a>
       </p>
     </div>
   );
