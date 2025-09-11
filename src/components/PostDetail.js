@@ -14,16 +14,35 @@ const PostDetail = () => {
   const [commentError, setCommentError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCommentDeleteConfirm, setShowCommentDeleteConfirm] = useState(null);
-  const [showCommentSubmitConfirm, setShowCommentSubmitConfirm] = useState(false); // New state for comment submission confirmation
+  const [showCommentSubmitConfirm, setShowCommentSubmitConfirm] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState('');
   const [editCommentError, setEditCommentError] = useState('');
   const [notification, setNotification] = useState('');
   const [likeLoading, setLikeLoading] = useState(false);
+  
+  // Local state to track if user has liked the post
+  const [hasLiked, setHasLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
 
   useEffect(() => {
     dispatch(fetchPost(id));
   }, [dispatch, id]);
+
+  // Update local like state when post data changes
+  useEffect(() => {
+    if (post && user) {
+      // Check if backend provides likers array
+      if (post.likers && Array.isArray(post.likers)) {
+        setHasLiked(post.likers.includes(user.id));
+      } else {
+        // If no likers array, we'll track it locally
+        // You might want to add an API call here to check like status
+        setHasLiked(false);
+      }
+      setLikesCount(post.likes_count || 0);
+    }
+  }, [post, user]);
 
   const validateComment = (content) => {
     if (!content.trim()) {
@@ -43,7 +62,6 @@ const PostDetail = () => {
       return;
     }
     setCommentError('');
-    // Show confirmation dialog instead of directly submitting
     setShowCommentSubmitConfirm(true);
   };
 
@@ -98,18 +116,22 @@ const PostDetail = () => {
     setEditCommentError('');
   };
 
-  
   const handleLike = async () => {
-    if (likeLoading || hasLiked) return; 
+    if (likeLoading) return;
     
     setLikeLoading(true);
     
     try {
       const result = await dispatch(toggleLike({ postId: id, isLike: true }));
       if (result.meta.requestStatus === 'fulfilled') {
+        // Update local state immediately for better UX
+        setHasLiked(true);
+        setLikesCount(prev => prev + 1);
+        
         setNotification('You liked the post!');
         setTimeout(() => setNotification(''), 3000);
         
+        // Refresh post data to sync with backend
         await dispatch(fetchPost(id));
       } else {
         setNotification('Failed to like the post!');
@@ -125,17 +147,21 @@ const PostDetail = () => {
   };
 
   const handleUnlike = async () => {
-    
-   
+    if (likeLoading) return;
     
     setLikeLoading(true);
     
     try {
       const result = await dispatch(toggleLike({ postId: id, isLike: false }));
       if (result.meta.requestStatus === 'fulfilled') {
+        // Update local state immediately for better UX
+        setHasLiked(false);
+        setLikesCount(prev => Math.max(0, prev - 1));
+        
         setNotification('You unliked the post!');
         setTimeout(() => setNotification(''), 3000);
         
+        // Refresh post data to sync with backend
         await dispatch(fetchPost(id));
       } else {
         setNotification('Failed to unlike the post!');
@@ -203,9 +229,6 @@ const PostDetail = () => {
     return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
   };
 
-  // Check if user has liked the post
-  const hasLiked = post?.likers?.includes(user?.id);
-
   if (loading) return <p className="loading">Loading...</p>;
   if (error) return <p className="error-message">Error: {JSON.stringify(error)}</p>;
   if (!post) return <p className="no-post">No post found</p>;
@@ -231,7 +254,7 @@ const PostDetail = () => {
       </div>
 
       <p className="post-meta">
-        By {post.author} | {post.read_count} reads | {post.likes_count} likes
+        By {post.author} | {post.read_count} reads | {likesCount} likes
       </p>
 
       {post.image && <img src={post.image} alt={post.title} className="post-image" />}
@@ -251,18 +274,14 @@ const PostDetail = () => {
         <div>
           <div className="action-buttons">
             <button
-              onClick={handleLike}
-              className={`action-button like-button ${hasLiked ? 'disabled-like' : 'active-like'}`}
-              disabled={likeLoading || hasLiked}
+              onClick={handleToggleLike}
+              className={`action-button ${hasLiked ? 'liked' : 'not-liked'}`}
+              disabled={likeLoading}
             >
-              {likeLoading && !hasLiked ? 'Liking...' : 'Like'}
-            </button>
-            <button
-              onClick={handleUnlike}
-              className={`action-button unlike-button ${!hasLiked ? 'disabled-unlike' : 'active-unlike'}`}
-              
-            >
-              {likeLoading && hasLiked ? 'Unliking...' : 'Unlike'}
+              {likeLoading 
+                ? (hasLiked ? 'Unliking...' : 'Liking...') 
+                : (hasLiked ? '❤️ Liked' : '🤍 Like')
+              }
             </button>
           </div>
           <form onSubmit={handleCommentSubmit} className="comment-form">
