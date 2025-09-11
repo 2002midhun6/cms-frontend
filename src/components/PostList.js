@@ -12,9 +12,51 @@ const PostList = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [page, setPage] = useState(1);
   const [deletingPostId, setDeletingPostId] = useState(null);
+  const [hasNextPage, setHasNextPage] = useState(true); // Track if next page exists
+  const [totalPages, setTotalPages] = useState(null); // Track total pages if available
+  const [pageError, setPageError] = useState(false); // Track pagination errors
 
   useEffect(() => {
-    dispatch(fetchPosts(page));
+    const fetchPostsData = async () => {
+      setPageError(false);
+      try {
+        const result = await dispatch(fetchPosts(page));
+        
+        if (result.meta.requestStatus === 'fulfilled') {
+          const data = result.payload;
+          
+          // If your backend returns paginated data with metadata
+          if (data.results) {
+            // Django REST framework pagination format
+            setHasNextPage(!!data.next);
+            if (data.count && data.results.length > 0) {
+              const postsPerPage = data.results.length;
+              setTotalPages(Math.ceil(data.count / postsPerPage));
+            }
+          } else {
+            // If it's just an array of posts, check if we got fewer posts than expected
+            // This assumes you have a consistent page size (adjust as needed)
+            const expectedPageSize = 10; // Adjust this to match your backend page size
+            setHasNextPage(data.length >= expectedPageSize);
+          }
+        } else if (result.meta.requestStatus === 'rejected') {
+          // Handle pagination errors (like invalid page)
+          if (result.payload?.status === 404 || result.payload?.message?.includes('Invalid page')) {
+            setPageError(true);
+            setHasNextPage(false);
+            // Go back to the previous page
+            if (page > 1) {
+              setPage(page - 1);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching posts:', error);
+        setPageError(true);
+      }
+    };
+
+    fetchPostsData();
   }, [dispatch, page]);
 
   // Handle blocked user error
@@ -49,7 +91,13 @@ const PostList = () => {
       try {
         const result = await dispatch(deletePost(postId));
         if (result.meta.requestStatus === 'fulfilled') {
-          dispatch(fetchPosts(page));
+          // Refresh current page, but if it becomes empty and we're not on page 1, go to previous page
+          const remainingPosts = posts.length - 1;
+          if (remainingPosts === 0 && page > 1) {
+            setPage(page - 1);
+          } else {
+            dispatch(fetchPosts(page));
+          }
         } else if (result.meta.requestStatus === 'rejected' && result.payload?.status === 403) {
           alert('You are not authorized to delete this post.');
         }
@@ -64,6 +112,19 @@ const PostList = () => {
 
   const canEditPost = (postAuthor) => {
     return isAuthenticated && (postAuthor === user?.username || user?.is_staff);
+  };
+
+  const handlePrevPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+      setPageError(false);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasNextPage && !pageError) {
+      setPage(page + 1);
+    }
   };
 
   return (
@@ -86,11 +147,16 @@ const PostList = () => {
       </div>
 
       {loading && <p className="loading">Loading...</p>}
-      {error && (
+      {error && !pageError && (
         <p className="error">
           {error.status === 403 && error.message.includes('Blocked user')
             ? 'Your account has been blocked. Please contact support.'
             : `Error: ${error.message}`}
+        </p>
+      )}
+      {pageError && (
+        <p className="error">
+          You've reached the end of the posts. Redirecting to the last available page.
         </p>
       )}
 
@@ -155,7 +221,7 @@ const PostList = () => {
         ))}
       </div>
 
-      {posts.length === 0 && !loading && (
+      {posts.length === 0 && !loading && !pageError && (
         <div className="no-posts">
           <p>No posts found. Be the first to create one!</p>
         </div>
@@ -163,21 +229,30 @@ const PostList = () => {
 
       <div className="pagination">
         <button
-          onClick={() => setPage(page - 1)}
-          disabled={page === 1}
+          onClick={handlePrevPage}
+          disabled={page === 1 || loading}
           className="pagination-button"
         >
           Previous
         </button>
-        <span className="page-info">Page {page}</span>
+        <span className="page-info">
+          Page {page}
+          {totalPages && ` of ${totalPages}`}
+        </span>
         <button
-          onClick={() => setPage(page + 1)}
-          disabled={error?.status === 403 && error?.message.includes('Blocked user')}
+          onClick={handleNextPage}
+          disabled={!hasNextPage || loading || pageError || (error?.status === 403 && error?.message.includes('Blocked user'))}
           className="pagination-button"
         >
           Next
         </button>
       </div>
+
+      {!hasNextPage && page > 1 && posts.length > 0 && (
+        <div className="pagination-info">
+          <p>You've reached the end of the posts.</p>
+        </div>
+      )}
     </div>
   );
 };
