@@ -14,16 +14,41 @@ const PostDetail = () => {
   const [commentError, setCommentError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showCommentDeleteConfirm, setShowCommentDeleteConfirm] = useState(null);
-  const [showCommentSubmitConfirm, setShowCommentSubmitConfirm] = useState(false); // New state for comment submission confirmation
+  const [showCommentSubmitConfirm, setShowCommentSubmitConfirm] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentContent, setEditingCommentContent] = useState('');
   const [editCommentError, setEditCommentError] = useState('');
   const [notification, setNotification] = useState('');
   const [likeLoading, setLikeLoading] = useState(false);
+  
+  // Add state to track user's like status
+  const [userLikeStatus, setUserLikeStatus] = useState(null); // null = unknown, true = liked, false = not liked
+  const [previousLikesCount, setPreviousLikesCount] = useState(0);
 
   useEffect(() => {
     dispatch(fetchPost(id));
   }, [dispatch, id]);
+
+  // Update like status when post data changes
+  useEffect(() => {
+    if (post) {
+      // If this is the first time loading or likes count changed, determine user's like status
+      if (userLikeStatus === null || previousLikesCount !== post.likes_count) {
+        // Compare current likes count with previous to determine if user has liked
+        if (previousLikesCount === 0 && post.likes_count > 0 && userLikeStatus === null) {
+          // Initial load - assume user hasn't liked (conservative approach)
+          setUserLikeStatus(false);
+        } else if (post.likes_count > previousLikesCount && likeLoading) {
+          // Likes increased and we just performed a like action
+          setUserLikeStatus(true);
+        } else if (post.likes_count < previousLikesCount && likeLoading) {
+          // Likes decreased and we just performed an unlike action
+          setUserLikeStatus(false);
+        }
+        setPreviousLikesCount(post.likes_count);
+      }
+    }
+  }, [post, previousLikesCount, userLikeStatus, likeLoading]);
 
   const validateComment = (content) => {
     if (!content.trim()) {
@@ -43,7 +68,6 @@ const PostDetail = () => {
       return;
     }
     setCommentError('');
-    // Show confirmation dialog instead of directly submitting
     setShowCommentSubmitConfirm(true);
   };
 
@@ -98,19 +122,21 @@ const PostDetail = () => {
     setEditCommentError('');
   };
 
-  
   const handleLike = async () => {
-    if (likeLoading || hasLiked) return; 
+    if (likeLoading) return;
     
     setLikeLoading(true);
+    const currentLikesCount = post.likes_count;
     
     try {
       const result = await dispatch(toggleLike({ postId: id, isLike: true }));
       if (result.meta.requestStatus === 'fulfilled') {
+        // Refresh post data to get updated likes count
+        await dispatch(fetchPost(id));
+        
+        // The useEffect will handle updating userLikeStatus based on count change
         setNotification('You liked the post!');
         setTimeout(() => setNotification(''), 3000);
-        
-        await dispatch(fetchPost(id));
       } else {
         setNotification('Failed to like the post!');
         setTimeout(() => setNotification(''), 3000);
@@ -125,18 +151,20 @@ const PostDetail = () => {
   };
 
   const handleUnlike = async () => {
-    
-   
+    if (likeLoading) return;
     
     setLikeLoading(true);
+    const currentLikesCount = post.likes_count;
     
     try {
       const result = await dispatch(toggleLike({ postId: id, isLike: false }));
       if (result.meta.requestStatus === 'fulfilled') {
+        // Refresh post data to get updated likes count
+        await dispatch(fetchPost(id));
+        
+        // The useEffect will handle updating userLikeStatus based on count change
         setNotification('You unliked the post!');
         setTimeout(() => setNotification(''), 3000);
-        
-        await dispatch(fetchPost(id));
       } else {
         setNotification('Failed to unlike the post!');
         setTimeout(() => setNotification(''), 3000);
@@ -203,8 +231,8 @@ const PostDetail = () => {
     return isAuthenticated && (commentAuthor === user?.username || user?.is_staff);
   };
 
-  // Check if user has liked the post
-  const hasLiked = post?.likers?.includes(user?.id);
+  // Use the tracked like status instead of the non-existent likers array
+  const hasLiked = userLikeStatus === true;
 
   if (loading) return <p className="loading">Loading...</p>;
   if (error) return <p className="error-message">Error: {JSON.stringify(error)}</p>;
@@ -255,12 +283,12 @@ const PostDetail = () => {
               className={`action-button like-button ${hasLiked ? 'disabled-like' : 'active-like'}`}
               disabled={likeLoading || hasLiked}
             >
-              {likeLoading && !hasLiked ? 'Liking...' : 'Like'}
+              {likeLoading && !hasLiked ? 'Liking...' : hasLiked ? 'Liked ✓' : 'Like'}
             </button>
             <button
               onClick={handleUnlike}
               className={`action-button unlike-button ${!hasLiked ? 'disabled-unlike' : 'active-unlike'}`}
-              
+              disabled={likeLoading || !hasLiked}
             >
               {likeLoading && hasLiked ? 'Unliking...' : 'Unlike'}
             </button>
@@ -362,6 +390,7 @@ const PostDetail = () => {
         </ul>
       </div>
 
+      {/* All your existing modals remain the same */}
       {showDeleteConfirm && (
         <div className="modal-overlay">
           <div className="modal-content">
