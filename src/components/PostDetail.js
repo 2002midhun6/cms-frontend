@@ -247,13 +247,13 @@ const PostDetail = () => {
             <Link to={`/posts/${id}/edit`} className="edit-button">
               Edit
             </Link>
-            <button
+            {/* <button
               onClick={handleDeleteClick}
               className="delete-button"
               disabled={deleteLoading}
             >
               {deleteLoading ? 'Deleting...' : 'Delete'}
-            </button>
+            </button> */}
           </div>
         )}
       </div>
