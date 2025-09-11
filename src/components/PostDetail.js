@@ -24,6 +24,7 @@ const PostDetail = () => {
   // Local state to track if user has liked the post
   const [hasLiked, setHasLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
+  const [initialLikeState, setInitialLikeState] = useState(null);
 
   useEffect(() => {
     dispatch(fetchPost(id));
@@ -32,17 +33,21 @@ const PostDetail = () => {
   // Update local like state when post data changes
   useEffect(() => {
     if (post && user) {
+      setLikesCount(post.likes_count || 0);
+      
       // Check if backend provides likers array
       if (post.likers && Array.isArray(post.likers)) {
-        setHasLiked(post.likers.includes(user.id));
-      } else {
-        // If no likers array, we'll track it locally
-        // You might want to add an API call here to check like status
+        const userHasLiked = post.likers.includes(user.id);
+        setHasLiked(userHasLiked);
+        setInitialLikeState(userHasLiked);
+      } else if (initialLikeState === null) {
+        // If no likers array and we haven't set initial state, assume not liked
         setHasLiked(false);
+        setInitialLikeState(false);
       }
-      setLikesCount(post.likes_count || 0);
+      // If we already have an initial state, keep the current hasLiked value
     }
-  }, [post, user]);
+  }, [post, user, initialLikeState]);
 
   const validateComment = (content) => {
     if (!content.trim()) {
