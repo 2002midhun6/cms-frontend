@@ -172,7 +172,7 @@ const postSlice = createSlice({
       })
       .addCase(fetchPosts.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload; 
+        state.error = action.payload;
       })
       .addCase(fetchPost.pending, (state) => {
         state.loading = true;
@@ -283,6 +283,14 @@ const postSlice = createSlice({
       .addCase(deleteComment.rejected, (state, action) => {
         state.deleteCommentLoading = false;
         state.error = action.payload;
+      })
+      .addCase(toggleLike.fulfilled, (state, action) => {
+        const { postId, isLike } = action.payload;
+        if (state.post && state.post.id === postId) {
+          state.post.likes_count = isLike
+            ? state.post.likes_count + 1
+            : Math.max(0, state.post.likes_count - 1);
+        }
       });
   },
 });

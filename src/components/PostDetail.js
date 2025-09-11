@@ -22,16 +22,17 @@ const PostDetail = () => {
   const [likeLoading, setLikeLoading] = useState(false);
   const [userLikeStatus, setUserLikeStatus] = useState(false); // Initialize as false
 
+  // Load like status from local storage when component mounts
   useEffect(() => {
-    dispatch(fetchPost(id));
-  }, [dispatch, id]);
-
-  // Set userLikeStatus when post data is loaded
-  useEffect(() => {
-    if (post && post.has_liked !== undefined) {
-      setUserLikeStatus(post.has_liked); // Set based on server response
+    if (isAuthenticated && user) {
+      const likeStatusKey = `likeStatus_${user.id}_${id}`;
+      const storedLikeStatus = localStorage.getItem(likeStatusKey);
+      if (storedLikeStatus !== null) {
+        setUserLikeStatus(JSON.parse(storedLikeStatus));
+      }
     }
-  }, [post]);
+    dispatch(fetchPost(id));
+  }, [dispatch, id, isAuthenticated, user]);
 
   const validateComment = (content) => {
     if (!content.trim()) {
@@ -106,13 +107,17 @@ const PostDetail = () => {
   };
 
   const handleLike = async () => {
-    if (likeLoading) return;
+    if (likeLoading || userLikeStatus) return;
 
     setLikeLoading(true);
     try {
       const result = await dispatch(toggleLike({ postId: id, isLike: true }));
       if (result.meta.requestStatus === 'fulfilled') {
-        setUserLikeStatus(true); // Update local state
+        setUserLikeStatus(true);
+        // Store like status in local storage
+        if (user) {
+          localStorage.setItem(`likeStatus_${user.id}_${id}`, JSON.stringify(true));
+        }
         dispatch(fetchPost(id)); // Refresh post data
         setNotification('You liked the post!');
         setTimeout(() => setNotification(''), 3000);
@@ -130,13 +135,17 @@ const PostDetail = () => {
   };
 
   const handleUnlike = async () => {
-    if (likeLoading) return;
+    if (likeLoading || !userLikeStatus) return;
 
     setLikeLoading(true);
     try {
       const result = await dispatch(toggleLike({ postId: id, isLike: false }));
       if (result.meta.requestStatus === 'fulfilled') {
-        setUserLikeStatus(false); // Update local state
+        setUserLikeStatus(false);
+        // Store like status in local storage
+        if (user) {
+          localStorage.setItem(`likeStatus_${user.id}_${id}`, JSON.stringify(false));
+        }
         dispatch(fetchPost(id)); // Refresh post data
         setNotification('You unliked the post!');
         setTimeout(() => setNotification(''), 3000);
@@ -161,6 +170,10 @@ const PostDetail = () => {
     try {
       const result = await dispatch(deletePost(id));
       if (result.meta.requestStatus === 'fulfilled') {
+        // Remove like status from local storage on post deletion
+        if (user) {
+          localStorage.removeItem(`likeStatus_${user.id}_${id}`);
+        }
         navigate('/posts');
       }
     } catch (error) {
