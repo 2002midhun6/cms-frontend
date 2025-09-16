@@ -54,6 +54,18 @@ const CommentManagement = () => {
   };
 
   const handleCommentAction = async (commentId, isApproved) => {
+    // Add confirmation alert for approval
+    if (isApproved) {
+      if (!window.confirm('Are you sure you want to approve this comment?')) {
+        return; // Exit if user cancels
+      }
+    } else {
+      // Add confirmation alert for rejection as well
+      if (!window.confirm('Are you sure you want to reject this comment?')) {
+        return; // Exit if user cancels
+      }
+    }
+
     setProcessingComments(prev => new Set(prev).add(commentId));
     try {
       await axiosInstance.post(`/posts/comments/${commentId}/approve/`, { is_approved: isApproved });
