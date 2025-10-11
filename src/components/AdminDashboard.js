@@ -35,7 +35,7 @@ const AdminDashboard = () => {
       const [usersRes, commentsRes, postsRes] = await Promise.all([
         axiosInstance.get('/auth/users/'),
         axiosInstance.get('/posts/comments/'),
-        axiosInstance.get('/posts/')  // FIXED: Removed duplicate 'posts'
+        axiosInstance.get('/posts/')
       ]);
 
       const users = usersRes.data.results || [];

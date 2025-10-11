@@ -20,9 +20,9 @@ const PostDetail = () => {
   const [editCommentError, setEditCommentError] = useState('');
   const [notification, setNotification] = useState('');
   const [likeLoading, setLikeLoading] = useState(false);
-  const [userLikeStatus, setUserLikeStatus] = useState(false); // Initialize as false
+  const [userLikeStatus, setUserLikeStatus] = useState(false); 
 
-  // Load like status from local storage when component mounts
+
   useEffect(() => {
     if (isAuthenticated && user) {
       const likeStatusKey = `likeStatus_${user.id}_${id}`;
@@ -60,7 +60,7 @@ const PostDetail = () => {
     dispatch(createComment({ postId: id, content: comment })).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setComment('');
-        dispatch(fetchPost(id));
+        // Don't fetch post again - comment is already added to state by the reducer
         setNotification('Comment added!');
         setTimeout(() => setNotification(''), 3000);
       } else {
@@ -114,11 +114,11 @@ const PostDetail = () => {
       const result = await dispatch(toggleLike({ postId: id, isLike: true }));
       if (result.meta.requestStatus === 'fulfilled') {
         setUserLikeStatus(true);
-        // Store like status in local storage
+        
         if (user) {
           localStorage.setItem(`likeStatus_${user.id}_${id}`, JSON.stringify(true));
         }
-        dispatch(fetchPost(id)); // Refresh post data
+        // Don't fetch post again - like count is already updated by the reducer
         setNotification('You liked the post!');
         setTimeout(() => setNotification(''), 3000);
       } else {
@@ -142,11 +142,11 @@ const PostDetail = () => {
       const result = await dispatch(toggleLike({ postId: id, isLike: false }));
       if (result.meta.requestStatus === 'fulfilled') {
         setUserLikeStatus(false);
-        // Store like status in local storage
+        
         if (user) {
           localStorage.setItem(`likeStatus_${user.id}_${id}`, JSON.stringify(false));
         }
-        dispatch(fetchPost(id)); // Refresh post data
+        // Don't fetch post again - like count is already updated by the reducer
         setNotification('You unliked the post!');
         setTimeout(() => setNotification(''), 3000);
       } else {
@@ -170,7 +170,6 @@ const PostDetail = () => {
     try {
       const result = await dispatch(deletePost(id));
       if (result.meta.requestStatus === 'fulfilled') {
-        // Remove like status from local storage on post deletion
         if (user) {
           localStorage.removeItem(`likeStatus_${user.id}_${id}`);
         }
@@ -197,7 +196,7 @@ const PostDetail = () => {
         postId: parseInt(id)
       }));
       if (result.meta.requestStatus === 'fulfilled') {
-        dispatch(fetchPost(id));
+        // Don't fetch post again - comment is already removed from state by the reducer
       }
     } catch (error) {
       console.error('Error deleting comment:', error);

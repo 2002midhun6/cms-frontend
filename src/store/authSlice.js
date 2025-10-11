@@ -28,10 +28,10 @@ export const logout = createAsyncThunk('auth/logout', async (_, { rejectWithValu
   }
 });
 
-// New action to check authentication status
+
 export const checkAuth = createAsyncThunk('auth/checkAuth', async (_, { rejectWithValue }) => {
   try {
-    const response = await axiosInstance.get('/auth/me/'); // Endpoint to get current user
+    const response = await axiosInstance.get('/auth/me/'); 
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response.data);
@@ -45,7 +45,7 @@ const authSlice = createSlice({
     isAuthenticated: false,
     loading: false,
     error: null,
-    initialized: false, // Track if auth check is complete
+    initialized: false, 
   },
   reducers: {
     clearError: (state) => {
