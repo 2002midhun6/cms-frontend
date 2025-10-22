@@ -18,9 +18,12 @@ export const fetchPosts = createAsyncThunk(
 
 export const fetchPost = createAsyncThunk(
   'posts/fetchPost',
-  async (id, { rejectWithValue }) => {
+  async ({ id, incrementView = false }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get(`/posts/${id}/`);
+      const url = incrementView 
+        ? `/posts/${id}/?increment_view=true` 
+        : `/posts/${id}/`;
+      const response = await axiosInstance.get(url);
       return response.data;
     } catch (error) {
       return rejectWithValue({

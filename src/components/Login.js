@@ -47,7 +47,7 @@ const Login = () => {
       return;
     }
 
-    // Clear previous login errors
+    
     setErrors((prev) => ({ ...prev, login: null }));
 
     console.log('Login submitting:', { username, password });
@@ -57,7 +57,7 @@ const Login = () => {
         navigate('/');
       } else if (result.meta.requestStatus === 'rejected') {
         const errorMessage = result.payload?.error || 'An error occurred during login';
-        console.log('Login error:', errorMessage); // Debug log
+        console.log('Login error:', errorMessage); 
         if (errorMessage === 'This account is blocked') {
           alert('Your account is blocked. Please contact support.');
           setErrors((prev) => ({

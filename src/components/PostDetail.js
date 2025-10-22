@@ -24,15 +24,16 @@ const PostDetail = () => {
 
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      const likeStatusKey = `likeStatus_${user.id}_${id}`;
-      const storedLikeStatus = localStorage.getItem(likeStatusKey);
-      if (storedLikeStatus !== null) {
-        setUserLikeStatus(JSON.parse(storedLikeStatus));
-      }
+  if (isAuthenticated && user) {
+    const likeStatusKey = `likeStatus_${user.id}_${id}`;
+    const storedLikeStatus = localStorage.getItem(likeStatusKey);
+    if (storedLikeStatus !== null) {
+      setUserLikeStatus(JSON.parse(storedLikeStatus));
     }
-    dispatch(fetchPost(id));
-  }, [dispatch, id, isAuthenticated, user]);
+  }
+  // Increment view count only on initial load
+  dispatch(fetchPost({ id, incrementView: true }));
+}, [dispatch, id, isAuthenticated, user]);
 
   const validateComment = (content) => {
     if (!content.trim()) {
