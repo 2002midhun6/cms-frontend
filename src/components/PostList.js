@@ -5,6 +5,60 @@ import { logout } from '../store/authSlice';
 import { Link, useNavigate } from 'react-router-dom';
 import './PostList.css';
 
+// Confirmation Modal Component
+const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message, isLoading }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">{title}</h3>
+          <button onClick={onClose} className="modal-close" aria-label="Close">
+            &times;
+          </button>
+        </div>
+        <div className="modal-body">
+          <p>{message}</p>
+        </div>
+        <div className="modal-footer">
+          <button
+            onClick={onClose}
+            className="modal-button cancel-button"
+            disabled={isLoading}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="modal-button confirm-button"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Notification Toast Component
+const Toast = ({ message, type, onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`toast toast-${type}`}>
+      <span>{message}</span>
+      <button onClick={onClose} className="toast-close" aria-label="Close">
+        &times;
+      </button>
+    </div>
+  );
+};
+
 const PostList = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -12,9 +66,14 @@ const PostList = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [page, setPage] = useState(1);
   const [deletingPostId, setDeletingPostId] = useState(null);
-  const [hasNextPage, setHasNextPage] = useState(true); // Track if next page exists
-  const [totalPages, setTotalPages] = useState(null); // Track total pages if available
-  const [pageError, setPageError] = useState(false); // Track pagination errors
+  const [hasNextPage, setHasNextPage] = useState(true);
+  const [totalPages, setTotalPages] = useState(null);
+  const [pageError, setPageError] = useState(false);
+  
+  // Modal and Toast state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     const fetchPostsData = async () => {
@@ -25,26 +84,20 @@ const PostList = () => {
         if (result.meta.requestStatus === 'fulfilled') {
           const data = result.payload;
           
-          // If your backend returns paginated data with metadata
           if (data.results) {
-            // Django REST framework pagination format
             setHasNextPage(!!data.next);
             if (data.count && data.results.length > 0) {
               const postsPerPage = data.results.length;
               setTotalPages(Math.ceil(data.count / postsPerPage));
             }
           } else {
-            // If it's just an array of posts, check if we got fewer posts than expected
-            // This assumes you have a consistent page size (adjust as needed)
-            const expectedPageSize = 10; // Adjust this to match your backend page size
+            const expectedPageSize = 10;
             setHasNextPage(data.length >= expectedPageSize);
           }
         } else if (result.meta.requestStatus === 'rejected') {
-          // Handle pagination errors (like invalid page)
           if (result.payload?.status === 404 || result.payload?.message?.includes('Invalid page')) {
             setPageError(true);
             setHasNextPage(false);
-            // Go back to the previous page
             if (page > 1) {
               setPage(page - 1);
             }
@@ -62,51 +115,64 @@ const PostList = () => {
   // Handle blocked user error
   useEffect(() => {
     if (error && error.status === 403 && error.message.includes('Blocked user')) {
-      alert('Your account has been blocked. You will be logged out.');
-      dispatch(logout());
-      navigate('/login');
+      setToast({
+        message: 'Your account has been blocked. You will be logged out.',
+        type: 'error'
+      });
+      setTimeout(() => {
+        dispatch(logout());
+        navigate('/login');
+      }, 2000);
     }
   }, [error, dispatch, navigate]);
 
-  // Debug logging
-  useEffect(() => {
-    console.log('User object:', user);
-    console.log('Is authenticated:', isAuthenticated);
-    console.log('Is staff:', user?.is_staff);
-  }, [user, isAuthenticated]);
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
 
   const handleLogout = () => {
     dispatch(logout());
     navigate('/login');
   };
 
-  const handleDeletePost = async (postId, postAuthor) => {
+  const initiateDeletePost = (postId, postAuthor) => {
     if (!isAuthenticated || (postAuthor !== user?.username && !user?.is_staff)) {
-      alert('You are not authorized to delete this post');
+      showToast('You are not authorized to delete this post', 'error');
       return;
     }
 
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      setDeletingPostId(postId);
-      try {
-        const result = await dispatch(deletePost(postId));
-        if (result.meta.requestStatus === 'fulfilled') {
-          // Refresh current page, but if it becomes empty and we're not on page 1, go to previous page
-          const remainingPosts = posts.length - 1;
-          if (remainingPosts === 0 && page > 1) {
-            setPage(page - 1);
-          } else {
-            dispatch(fetchPosts(page));
-          }
-        } else if (result.meta.requestStatus === 'rejected' && result.payload?.status === 403) {
-          alert('You are not authorized to delete this post.');
+    setPostToDelete({ id: postId, author: postAuthor });
+    setShowDeleteModal(true);
+  };
+
+  const handleDeletePost = async () => {
+    if (!postToDelete) return;
+
+    setDeletingPostId(postToDelete.id);
+    try {
+      const result = await dispatch(deletePost(postToDelete.id));
+      if (result.meta.requestStatus === 'fulfilled') {
+        showToast('Post deleted successfully', 'success');
+        setShowDeleteModal(false);
+        
+        // Refresh current page, but if it becomes empty and we're not on page 1, go to previous page
+        const remainingPosts = posts.length - 1;
+        if (remainingPosts === 0 && page > 1) {
+          setPage(page - 1);
+        } else {
+          dispatch(fetchPosts(page));
         }
-      } catch (error) {
-        console.error('Error deleting post:', error);
-        alert('Error deleting post. Please try again.');
-      } finally {
-        setDeletingPostId(null);
+      } else if (result.meta.requestStatus === 'rejected' && result.payload?.status === 403) {
+        showToast('You are not authorized to delete this post', 'error');
+        setShowDeleteModal(false);
       }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      showToast('Error deleting post. Please try again.', 'error');
+      setShowDeleteModal(false);
+    } finally {
+      setDeletingPostId(null);
+      setPostToDelete(null);
     }
   };
 
@@ -208,7 +274,7 @@ const PostList = () => {
                     Edit
                   </Link>
                   <button
-                    onClick={() => handleDeletePost(post.id, post.author)}
+                    onClick={() => initiateDeletePost(post.id, post.author)}
                     className="action-button delete-button"
                     disabled={deletingPostId === post.id}
                   >
@@ -252,6 +318,28 @@ const PostList = () => {
         <div className="pagination-info">
           <p>You've reached the end of the posts.</p>
         </div>
+      )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setPostToDelete(null);
+        }}
+        onConfirm={handleDeletePost}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        isLoading={deletingPostId !== null}
+      />
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );
