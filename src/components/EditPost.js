@@ -157,7 +157,13 @@ const EditPost = () => {
 
   return (
     <div className="edit-post-container">
-      <h2 className="edit-post-title">Edit Post</h2>
+      <h2>Edit Post</h2>
+      
+      {error && (
+        <div className="error-message">
+          {typeof error === 'string' ? error : JSON.stringify(error)}
+        </div>
+      )}
       
       <form onSubmit={handleSubmit} className="edit-post-form">
         <div className="form-group">
@@ -170,21 +176,7 @@ const EditPost = () => {
             onChange={handleChange}
             required
             className="form-input"
-            maxLength={200}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="excerpt">Excerpt</label>
-          <textarea
-            id="excerpt"
-            name="excerpt"
-            value={formData.excerpt}
-            onChange={handleChange}
-            className="form-textarea"
-            rows="3"
-            maxLength={500}
-            placeholder="Brief summary of your post..."
+            placeholder="Enter post title"
           />
         </div>
 
@@ -197,45 +189,43 @@ const EditPost = () => {
             onChange={handleChange}
             required
             className="form-textarea"
-            rows="15"
+            placeholder="Enter post content"
+            rows="10"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="image">Featured Image</label>
+          <label htmlFor="image">Image (optional)</label>
           <input
             type="file"
             id="image"
             name="image"
-            onChange={handleImageChange}
+            onChange={handleChange}
             accept="image/*"
             className="form-input"
           />
-          {imagePreview && (
+          {previewImage && (
             <div className="image-preview">
-              <img src={imagePreview} alt="Preview" />
-              <p className="image-note">
-                {formData.image ? 'New image selected' : 'Current image'}
-              </p>
+              <img src={previewImage} alt="Preview" className="preview-image" />
             </div>
           )}
         </div>
 
         <div className="form-actions">
-          <button
-            type="button"
+          <button 
+            type="submit" 
+            disabled={updateLoading}
+            className="submit-button"
+          >
+            {updateLoading ? 'Updating...' : 'Update Post'}
+          </button>
+          <button 
+            type="button" 
             onClick={handleCancel}
             className="cancel-button"
             disabled={updateLoading}
           >
             Cancel
-          </button>
-          <button
-            type="submit"
-            className="submit-button"
-            disabled={updateLoading || !hasChanges}
-          >
-            {updateLoading ? 'Updating...' : 'Update Post'}
           </button>
         </div>
       </form>
