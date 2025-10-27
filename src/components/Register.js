@@ -24,6 +24,58 @@ const Register = () => {
     return strength;
   };
 
+  const formatErrorMessage = (error) => {
+    if (!error) return '';
+    
+    // If error is a string, return it directly
+    if (typeof error === 'string') return error;
+    
+    // If error has a message property
+    if (error.message) return error.message;
+    
+    // If error is an object with field-specific errors
+    if (typeof error === 'object') {
+      const errorMessages = [];
+      
+      // Check for common field errors
+      if (error.username) {
+        const usernameError = Array.isArray(error.username) ? error.username[0] : error.username;
+        errorMessages.push(`Username: ${usernameError}`);
+      }
+      if (error.email) {
+        const emailError = Array.isArray(error.email) ? error.email[0] : error.email;
+        errorMessages.push(`Email: ${emailError}`);
+      }
+      if (error.password) {
+        const passwordError = Array.isArray(error.password) ? error.password[0] : error.password;
+        errorMessages.push(`Password: ${passwordError}`);
+      }
+      if (error.bio) {
+        const bioError = Array.isArray(error.bio) ? error.bio[0] : error.bio;
+        errorMessages.push(`Bio: ${bioError}`);
+      }
+      
+      // Check for non_field_errors or detail
+      if (error.non_field_errors) {
+        const nonFieldError = Array.isArray(error.non_field_errors) 
+          ? error.non_field_errors[0] 
+          : error.non_field_errors;
+        errorMessages.push(nonFieldError);
+      }
+      if (error.detail) {
+        errorMessages.push(error.detail);
+      }
+      
+      // If we found specific errors, return them
+      if (errorMessages.length > 0) {
+        return errorMessages.join('. ');
+      }
+    }
+    
+    // Fallback to a generic error message
+    return 'Registration failed. Please try again.';
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -137,7 +189,11 @@ const Register = () => {
         >
           {loading ? 'Registering...' : 'Register'}
         </button>
-        {error && <p className="error-message server-error text-red-500 text-sm mt-2">Error: {JSON.stringify(error)}</p>}
+        {error && (
+          <div className="error-message server-error bg-red-50 border border-red-200 text-red-700 p-3 rounded mt-2">
+            {formatErrorMessage(error)}
+          </div>
+        )}
       </div>
       <p className="login-link text-center mt-4">
         Already have an account? <a href="/login" className="text-blue-500 hover:underline">Login</a>
