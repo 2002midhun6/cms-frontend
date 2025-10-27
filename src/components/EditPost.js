@@ -157,13 +157,7 @@ const EditPost = () => {
 
   return (
     <div className="edit-post-container">
-      <h2>Edit Post</h2>
-      
-      {error && (
-        <div className="error-message">
-          {typeof error === 'string' ? error : JSON.stringify(error)}
-        </div>
-      )}
+      <h2 className="edit-post-title">Edit Post</h2>
       
       <form onSubmit={handleSubmit} className="edit-post-form">
         <div className="form-group">
@@ -176,9 +170,23 @@ const EditPost = () => {
             onChange={handleChange}
             required
             className="form-input"
-            placeholder="Enter post title"
+            maxLength={200}
           />
         </div>
+
+        {/* <div className="form-group">
+          <label htmlFor="excerpt">Excerpt</label>
+          <textarea
+            id="excerpt"
+            name="excerpt"
+            value={formData.excerpt}
+            onChange={handleChange}
+            className="form-textarea"
+            rows="3"
+            maxLength={500}
+            placeholder="Brief summary of your post..."
+          />
+        </div> */}
 
         <div className="form-group">
           <label htmlFor="content">Content *</label>
@@ -189,43 +197,45 @@ const EditPost = () => {
             onChange={handleChange}
             required
             className="form-textarea"
-            placeholder="Enter post content"
-            rows="10"
+            rows="15"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="image">Image (optional)</label>
+          <label htmlFor="image">Featured Image</label>
           <input
             type="file"
             id="image"
             name="image"
-            onChange={handleChange}
+            onChange={handleImageChange}
             accept="image/*"
             className="form-input"
           />
-          {previewImage && (
+          {imagePreview && (
             <div className="image-preview">
-              <img src={previewImage} alt="Preview" className="preview-image" />
+              <img src={imagePreview} alt="Preview" />
+              <p className="image-note">
+                {formData.image ? 'New image selected' : 'Current image'}
+              </p>
             </div>
           )}
         </div>
 
         <div className="form-actions">
-          <button 
-            type="submit" 
-            disabled={updateLoading}
-            className="submit-button"
-          >
-            {updateLoading ? 'Updating...' : 'Update Post'}
-          </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={handleCancel}
             className="cancel-button"
             disabled={updateLoading}
           >
             Cancel
+          </button>
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={updateLoading || !hasChanges}
+          >
+            {updateLoading ? 'Updating...' : 'Update Post'}
           </button>
         </div>
       </form>
