@@ -23,10 +23,7 @@ const Login = () => {
       newErrors.username = 'Username must be at least 3 characters';
     } else if (username.length > 20) {
       newErrors.username = 'Username must be 20 characters or less';
-    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      newErrors.username = 'Username can only contain letters, numbers, and underscores';
-    }
-
+    } 
     // Password validation
     if (!password) {
       newErrors.password = 'Password is required';
